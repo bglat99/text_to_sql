@@ -1,0 +1,17 @@
+unsloth[colab-new]
+torch
+transformers
+datasets
+accelerate
+peft
+bitsandbytes
+trl
+pandas
+sqlite3
+yfinance
+sqlalchemy
+numpy
+scikit-learn
+tqdm
+matplotlib
+seaborn 
