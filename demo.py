@@ -11,7 +11,7 @@ import sqlite3
 import pandas as pd
 
 class FinancialSQLDemo:
-    def __init__(self, model_path="financial_sql_model"):
+    def __init__(self, model_path="lightweight_llama_model"):
         """
         Initialize the demo with the fine-tuned model
         """
@@ -182,7 +182,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="Demo the fine-tuned text-to-SQL model")
-    parser.add_argument("--model_path", default="financial_sql_model", help="Path to fine-tuned model")
+    parser.add_argument("--model_path", default="lightweight_llama_model", help="Path to fine-tuned model")
     parser.add_argument("--interactive", action="store_true", help="Run interactive mode")
     parser.add_argument("--demo", action="store_true", help="Run demo queries")
     parser.add_argument("--no-plot", action="store_true", help="Disable plotting in demo mode")

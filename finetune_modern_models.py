@@ -106,11 +106,24 @@ def setup_model_and_tokenizer():
         
         model = get_peft_model(model, lora_config)
 
-        # Ensure model is in training mode and parameters require gradients
+        # Enable training for LoRA parameters
         model.train()
-        for param in model.parameters():
+        
+        # Print model to see structure
+        logger.info("Checking trainable parameters...")
+        trainable_params = 0
+        all_param = 0
+        for name, param in model.named_parameters():
+            all_param += param.numel()
             if param.requires_grad:
-                param.requires_grad_(True)
+                trainable_params += param.numel()
+                logger.info(f"Trainable: {name} - {param.shape}")
+        
+        logger.info(f"Trainable params: {trainable_params:,} || All params: {all_param:,} || Trainable%: {100 * trainable_params / all_param:.2f}%")
+        
+        if trainable_params == 0:
+            logger.error("❌ No trainable parameters found! LoRA setup failed.")
+            raise Exception("No trainable parameters - LoRA configuration issue")
 
         logger.info("✅ Model and tokenizer loaded successfully!")
         logger.info(f"Using modern model: {selected_model}")
@@ -279,30 +292,38 @@ def main():
             per_device_train_batch_size=1,
             gradient_accumulation_steps=4,
             warmup_steps=10,
-            max_steps=200,  # More steps for better training
-            learning_rate=1e-4,
+            max_steps=50,  # Fewer steps for testing
+            learning_rate=2e-4,
             fp16=False,
             bf16=False,
-            logging_steps=10,
+            logging_steps=5,
             optim="adamw_torch",
             weight_decay=0.01,
-            lr_scheduler_type="linear",
+            lr_scheduler_type="cosine",
             seed=3407,
             output_dir="./modern_model_outputs",
             save_strategy="steps",
-            save_steps=50,
+            save_steps=25,
             report_to="none",
             dataloader_pin_memory=False,
             remove_unused_columns=False,
-            gradient_checkpointing=True,  # Enable to save memory
+            gradient_checkpointing=False,  # Disable for gradient debugging
             dataloader_num_workers=0,  # Reduce memory usage
-            use_cpu=True,  # Use CPU instead of MPS to avoid memory issues
+            use_cpu=True,  # Use CPU instead of MPS
         )
         
+        # Add data collator for proper tokenization
+        from transformers import DataCollatorForLanguageModeling
+        data_collator = DataCollatorForLanguageModeling(
+            tokenizer=tokenizer,
+            mlm=False,  # We're doing causal LM, not masked LM
+        )
+
         trainer = AppleSiliconTrainer(
             model=model,
             args=training_args,
             train_dataset=dataset,
+            data_collator=data_collator,
         )
         
         # Train the model
